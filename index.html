@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <title>Image Background Remover</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding:5px;
+    }
+    #h3-title{
+    background:#2f4f4f;
+    color:#fff;
+    padding:8px;
+    border-radius:3px;
+
+    
+    }
+    
+    input[type="file"] {
+    display: none; 
+    }
+    
+    label {
+    display: inline-block;
+    background-color: #8A2BE2;
+    color: white;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    }
+    
+    label:hover {
+    background-color: #45a049;
+    }
+    
+    label i {
+    margin-right: 8px; 
+    font-size: 16px;
+    }
+    
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    #download-btn{
+    
+    background:#006400;
+    border-radius:5px
+    }
+    #remove-btn{
+    width:150px;
+    height:30px;
+    padding:3px 8px
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    img {
+      max-width: 70%;
+      margin: 20px 0;
+    }
+    #output-image{
+    border:1px solid gray
+    
+    }
+    #loading-percentage {
+    display: none;
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+    background: linear-gradient(45deg, #4CAF50, #8BC34A);
+    padding: 7px 17px;
+    border-radius: 50px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    width: fit-content;
+    margin: 20px auto;
+    text-align: center;
+    animation: fadeIn 1s ease-in-out;
+    transform: scale(1);
+    transition: transform 0.3s ease;
+    }
+    
+    #loading-percentage:hover {
+    transform: scale(1.1);
+    }
+    
+    @keyframes fadeIn {
+    0% {
+    opacity: 0;
+    }
+    100% {
+    opacity: 1;
+    }
+    }
+    
+    
+   
+    
+    
+  </style>
+</head>
+<body>
+  <h3 id="h3-title">Image Background Remover</h3>
+  <label for="upload"><i class="fas fa-upload"></i>Choose Image</label>
+  <input type="file" id="upload" accept="image/*">
+  
+  <div>
+    <h3>Original Image</h3>
+    <img id="original-image" alt="Original Image" src="https://i.ibb.co.com/7VsKdmP/images-4.jpg">
+    <button id="remove-btn">Remove Background</button>
+    <div id="loading-percentage" style="display: none;">Removing: 0%</div>
+    
+    
+  </div>
+  <hr>
+  <div>
+    <h3>Image Without Background</h3>
+    <img id="output-image" alt="Output Image" src="https://i.ibb.co.com/fd8gKgK/background-removed-2.png">
+  </div>
+  <a id="download-btn" style="display: none;" download="background_removed.png">
+    <button id="download-btn">Download Image</button>
+  </a>
+
+
+
+
+
+
+
+
+
+<br><br><br>
+<i>Created by <a href="https://www.facebook.com/Rubel48Mahmud?mibextid=ZbWKwL" >Rubel Mahmud</a></i>
+
+
+
+
+
+
+
+  <script>
+    const apiKey = "L86gznS3FLPJaJZazRxrR9cH"; // Remove.bg API Key
+    const uploadInput = document.getElementById("upload");
+    const removeBtn = document.getElementById("remove-btn");
+    const originalImage = document.getElementById("original-image");
+    const outputImage = document.getElementById("output-image");
+    const downloadBtn = document.getElementById("download-btn");
+    
+    let imageFile;
+
+    uploadInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        imageFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          originalImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    const loadingPercentage = document.getElementById("loading-percentage"); 
+    
+    removeBtn.addEventListener("click", async () => {
+    if (!imageFile) {
+    
+    Swal.fire("Please upload an image first!");
+    return;
+    
+    }
+    
+   
+    loadingPercentage.style.display = "block";
+    loadingPercentage.innerText = "Removing: 0%";
+    
+    const formData = new FormData();
+    formData.append("image_file", imageFile);
+    formData.append("size", "auto");
+    
+    try {
+    let percentage = 0;
+    
+    // update percent 
+    const progressInterval = setInterval(() => {
+    if (percentage < 90) { 
+    percentage += 10;
+    loadingPercentage.innerText = `Removing: ${percentage}%`;
+    }
+    }, 300); // increase 10% per 300ms
+    
+    const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+    method: "POST",
+    headers: {
+    "X-Api-Key": apiKey,
+    },
+    body: formData,
+    });
+    
+    if (!response.ok) {
+    throw new Error("Failed to remove background.");
+    }
+    
+    clearInterval(progressInterval); //close interval 
+    loadingPercentage.innerText = "Loading: 100%";
+    
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    outputImage.src = url;
+    
+    
+    // set download button and show it
+    downloadBtn.style.display = "inline-block";
+    downloadBtn.href = url; 
+    downloadBtn.download = "background_removed.png"; 
+    
+    
+    //hide loading function 
+    setTimeout(() => {
+    loadingPercentage.style.display = "none";
+    }, 500);
+    
+    } catch (error) {
+    alert(error.message);
+    loadingPercentage.style.display = "none";
+    }
+    });
+    
+    
+    
+    
+  </script>
+</body>
+</html>
